@@ -1,0 +1,87 @@
+version: '3'
+services:
+  eureka-service:
+    image: eureka-service:latest
+    ports:
+      - 8761:8761
+  product-service:
+    image: product-service:latest
+    ports:
+      - 3000:3000
+    environment:
+      - PORT=3000
+      - MONGO_URL=product-mongo
+      - MONGO_DB=product-service
+      - MONGO_COLLECTION=products
+      - MONGO_USER=product-service
+      - MONGO_PASSWORD=product-service
+      - MONGO_AUTH_SOURCE=admin
+      - EUREKA_HOST=eureka-service
+    depends_on:
+      - product-mongo
+      - eureka-service
+  product-mongo:
+    image: mongo:latest
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=product-service
+      - MONGO_INITDB_ROOT_PASSWORD=product-service
+      - MONGO_INITDB_DATABASE=product-service
+    volumes:
+      - ./product-mongo-init.js:/product-mongo-init.js:ro
+  order-service:
+    image: order-service:latest
+    ports:
+      - 3001:3000
+    environment:
+      - PORT=3000
+      - MONGO_URL=order-mongo
+      - MONGO_DB=order-service
+      - MONGO_COLLECTION=orders
+      - MONGO_USER=order-service
+      - MONGO_PASSWORD=order-service
+      - MONGO_AUTH_SOURCE=admin
+      - INVENTORY_SERVICE_URL=http://inventory-service:3000
+      - EUREKA_HOST=eureka-service
+    depends_on:
+      - order-mongo
+      - eureka-service
+  order-mongo:
+    image: mongo:latest
+    ports:
+      - 27018:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=order-service
+      - MONGO_INITDB_ROOT_PASSWORD=order-service
+      - MONGO_INITDB_DATABASE=order-service
+    volumes:
+      - ./order-mongo-init.js:/order-mongo-init.js:ro
+  inventory-service:
+    image: inventory-service:latest
+    # ports:
+      # - 3002:3000
+    deploy:
+      replicas: 2
+    environment:
+      - PORT=0
+      - MONGO_URL=inventory-mongo
+      - MONGO_DB=inventory-service
+      - MONGO_COLLECTION=inventory
+      - MONGO_USER=inventory-service
+      - MONGO_PASSWORD=inventory-service
+      - MONGO_AUTH_SOURCE=admin
+      - EUREKA_HOST=eureka-service
+    depends_on:
+      - inventory-mongo
+      - eureka-service
+  inventory-mongo:
+    image: mongo:latest
+    ports:
+      - 27019:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=inventory-service
+      - MONGO_INITDB_ROOT_PASSWORD=inventory-service
+      - MONGO_INITDB_DATABASE=inventory-service
+    volumes:
+      - ./inventory-mongo-init.js:/inventory-mongo-init.js:ro
