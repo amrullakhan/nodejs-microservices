@@ -1,5 +1,14 @@
 version: '3'
 services:
+  api-gateway:
+    image: api-gateway:latest
+    ports:
+      - 8080:3000
+    environment:
+      - PORT=3000
+      - EUREKA_HOST=eureka-service
+    depends_on:
+      - eureka-service
   eureka-service:
     image: eureka-service:latest
     ports:
